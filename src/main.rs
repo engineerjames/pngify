@@ -53,7 +53,7 @@ fn main() {
     let bmp_file_path = Path::new(&args[1]);
     let out_file_path = Path::new(&args[2]);
     let bmp_file_name = bmp_file_path.file_name().unwrap().to_str().unwrap();
-    let png_file_path = out_file_path.to_str().unwrap().to_owned() + bmp_file_name;
+    let png_file_path = out_file_path.to_str().unwrap().to_owned() + &bmp_file_name[..bmp_file_name.len() - 4] + ".png";
 
     let trans_pixels = get_transparent_pixels();
     let loaded_image = bmp::open(bmp_file_path).unwrap();
