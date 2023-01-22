@@ -23,17 +23,46 @@ fn get_transparent_pixels() -> Vec<Pixel> {
 fn main() {
     let trans_pixels = get_transparent_pixels();
     let loaded_image = bmp::open("D:\\git\\pngify\\assets\\00018.bmp").unwrap();
+    let mut serialized_bytes: Vec<u8> = Vec::new();
+
+    println!(
+        "Loaded image is (wxh): {}x{}",
+        loaded_image.get_width(),
+        loaded_image.get_height()
+    );
+
     for (x, y) in loaded_image.coordinates() {
-        if trans_pixels.contains(&loaded_image.get_pixel(x, y)) {
-            println!("Contains transparent pixel at {}, {}", x, y);
-        }
+        if trans_pixels.contains(&loaded_image.get_pixel(x, y)) {}
+
+        let alpha = if trans_pixels.contains(&loaded_image.get_pixel(x, y)) {
+            0
+        } else {
+            255
+        };
+
+        let pixel = loaded_image.get_pixel(x, y);
+        serialized_bytes.push(pixel.r);
+        serialized_bytes.push(pixel.g);
+        serialized_bytes.push(pixel.b);
+        serialized_bytes.push(alpha);
     }
 
-    let path = Path::new(r"/path/to/image.png");
+    let path = Path::new(r".\output.png");
     let file = File::create(path).unwrap();
     let ref mut w = BufWriter::new(file);
-    let mut encoder = png::Encoder::new(w, loaded_image.get_width(), loaded_image.get_height()); // Width is 2 pixels and height is 1.
+    let mut encoder = png::Encoder::new(w, loaded_image.get_width(), loaded_image.get_height());
+    encoder.set_color(png::ColorType::Rgba);
+    encoder.set_depth(png::BitDepth::Eight);
+    encoder.set_source_gamma(png::ScaledFloat::from_scaled(45455)); // 1.0 / 2.2, scaled by 100000
+    encoder.set_source_gamma(png::ScaledFloat::new(1.0 / 2.2)); // 1.0 / 2.2, unscaled, but rounded
+    let source_chromaticities = png::SourceChromaticities::new(
+        // Using unscaled instantiation here
+        (0.31270, 0.32900),
+        (0.64000, 0.33000),
+        (0.30000, 0.60000),
+        (0.15000, 0.06000),
+    );
+    encoder.set_source_chromaticities(source_chromaticities);
     let mut writer = encoder.write_header().unwrap();
-    let data = [255, 0, 0, 255, 0, 0, 0, 255]; // An array containing a RGBA sequence. First pixel is red and second pixel is black.
-    writer.write_image_data(&data).unwrap(); // Save
+    writer.write_image_data(&serialized_bytes).unwrap();
 }
