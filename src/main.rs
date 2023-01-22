@@ -1,5 +1,6 @@
 use bmp::Pixel;
 use png;
+use std::env;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
@@ -20,31 +21,50 @@ fn get_transparent_pixels() -> Vec<Pixel> {
     return transparent_vec;
 }
 
-fn main() {
-    let trans_pixels = get_transparent_pixels();
-    let loaded_image = bmp::open("D:\\git\\pngify\\assets\\00018.bmp").unwrap();
+fn get_serialized_bytes(image: bmp::Image, trans_pixels: Vec<Pixel>) -> Vec<u8> {
     let mut serialized_bytes: Vec<u8> = Vec::new();
 
-    for (x, y) in loaded_image.coordinates() {
-        if trans_pixels.contains(&loaded_image.get_pixel(x, y)) {}
-
-        let alpha = if trans_pixels.contains(&loaded_image.get_pixel(x, y)) {
+    for (x, y) in image.coordinates() {
+        let alpha = if trans_pixels.contains(&image.get_pixel(x, y)) {
             0
         } else {
             255
         };
 
-        let pixel = loaded_image.get_pixel(x, y);
+        let pixel = image.get_pixel(x, y);
         serialized_bytes.push(pixel.r);
         serialized_bytes.push(pixel.g);
         serialized_bytes.push(pixel.b);
         serialized_bytes.push(alpha);
     }
 
-    let path = Path::new(r".\output.png");
+    return serialized_bytes;
+}
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() < 3 {
+        println!("pngify: Will convert Astonia-formatted BMP files to transparency-enabled PNGs.");
+        println!("Program usage: `pngify <path_to_file> <output_directory>`");
+        return;
+    }
+
+    let bmp_file_path = Path::new(&args[1]);
+    let out_file_path = Path::new(&args[2]);
+    let bmp_file_name = bmp_file_path.file_name().unwrap().to_str().unwrap();
+    let png_file_path = out_file_path.to_str().unwrap().to_owned() + bmp_file_name;
+
+    let trans_pixels = get_transparent_pixels();
+    let loaded_image = bmp::open(bmp_file_path).unwrap();
+    let height = loaded_image.get_height();
+    let width = loaded_image.get_width();
+    let serialized_bytes = get_serialized_bytes(loaded_image, trans_pixels);
+
+    let path = Path::new(png_file_path.as_str());
     let file = File::create(path).unwrap();
     let ref mut w = BufWriter::new(file);
-    let mut encoder = png::Encoder::new(w, loaded_image.get_width(), loaded_image.get_height());
+    let mut encoder = png::Encoder::new(w, width, height);
     encoder.set_color(png::ColorType::Rgba);
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header().unwrap();
