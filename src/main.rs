@@ -25,12 +25,6 @@ fn main() {
     let loaded_image = bmp::open("D:\\git\\pngify\\assets\\00018.bmp").unwrap();
     let mut serialized_bytes: Vec<u8> = Vec::new();
 
-    println!(
-        "Loaded image is (wxh): {}x{}",
-        loaded_image.get_width(),
-        loaded_image.get_height()
-    );
-
     for (x, y) in loaded_image.coordinates() {
         if trans_pixels.contains(&loaded_image.get_pixel(x, y)) {}
 
@@ -53,16 +47,6 @@ fn main() {
     let mut encoder = png::Encoder::new(w, loaded_image.get_width(), loaded_image.get_height());
     encoder.set_color(png::ColorType::Rgba);
     encoder.set_depth(png::BitDepth::Eight);
-    encoder.set_source_gamma(png::ScaledFloat::from_scaled(45455)); // 1.0 / 2.2, scaled by 100000
-    encoder.set_source_gamma(png::ScaledFloat::new(1.0 / 2.2)); // 1.0 / 2.2, unscaled, but rounded
-    let source_chromaticities = png::SourceChromaticities::new(
-        // Using unscaled instantiation here
-        (0.31270, 0.32900),
-        (0.64000, 0.33000),
-        (0.30000, 0.60000),
-        (0.15000, 0.06000),
-    );
-    encoder.set_source_chromaticities(source_chromaticities);
     let mut writer = encoder.write_header().unwrap();
     writer.write_image_data(&serialized_bytes).unwrap();
 }
