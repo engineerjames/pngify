@@ -21,12 +21,6 @@ fn get_transparent_pixels() -> Vec<Pixel> {
 }
 
 fn main() {
-    let transparent = Pixel {
-        r: 255,
-        g: 0,
-        b: 255,
-    };
-
     let trans_pixels = get_transparent_pixels();
     let loaded_image = bmp::open("D:\\git\\pngify\\assets\\00018.bmp").unwrap();
     for (x, y) in loaded_image.coordinates() {
