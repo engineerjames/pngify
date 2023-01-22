@@ -41,6 +41,21 @@ fn get_serialized_bytes(image: bmp::Image, trans_pixels: Vec<Pixel>) -> Vec<u8> 
     return serialized_bytes;
 }
 
+fn create_png_from_serialized_bytes(
+    serialized_bytes: Vec<u8>,
+    out_path: &Path,
+    width: u32,
+    height: u32,
+) {
+    let file = File::create(out_path).unwrap();
+    let ref mut w = BufWriter::new(file);
+    let mut encoder = png::Encoder::new(w, width, height);
+    encoder.set_color(png::ColorType::Rgba);
+    encoder.set_depth(png::BitDepth::Eight);
+    let mut writer = encoder.write_header().unwrap();
+    writer.write_image_data(&serialized_bytes).unwrap();
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -53,7 +68,9 @@ fn main() {
     let bmp_file_path = Path::new(&args[1]);
     let out_file_path = Path::new(&args[2]);
     let bmp_file_name = bmp_file_path.file_name().unwrap().to_str().unwrap();
-    let png_file_path = out_file_path.to_str().unwrap().to_owned() + &bmp_file_name[..bmp_file_name.len() - 4] + ".png";
+    let png_file_path = out_file_path.to_str().unwrap().to_owned()
+        + &bmp_file_name[..bmp_file_name.len() - 4]
+        + ".png";
 
     let trans_pixels = get_transparent_pixels();
     let loaded_image = bmp::open(bmp_file_path).unwrap();
@@ -62,11 +79,6 @@ fn main() {
     let serialized_bytes = get_serialized_bytes(loaded_image, trans_pixels);
 
     let path = Path::new(png_file_path.as_str());
-    let file = File::create(path).unwrap();
-    let ref mut w = BufWriter::new(file);
-    let mut encoder = png::Encoder::new(w, width, height);
-    encoder.set_color(png::ColorType::Rgba);
-    encoder.set_depth(png::BitDepth::Eight);
-    let mut writer = encoder.write_header().unwrap();
-    writer.write_image_data(&serialized_bytes).unwrap();
+
+    create_png_from_serialized_bytes(serialized_bytes, path, width, height);
 }
