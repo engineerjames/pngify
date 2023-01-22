@@ -16,3 +16,6 @@ Cargo.lock
 
 # Ignore all test outputs
 *.png
+*.zip
+/assets/gfx_bmpall/**
+/assets/merc2gfxsrc/**
