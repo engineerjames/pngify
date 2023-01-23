@@ -1,5 +1,5 @@
 use bmp::Pixel;
-use png;
+use png::{self, Compression};
 use std::env;
 use std::fs::File;
 use std::io::BufWriter;
@@ -52,6 +52,7 @@ fn create_png_from_serialized_bytes(
     let mut encoder = png::Encoder::new(w, width, height);
     encoder.set_color(png::ColorType::Rgba);
     encoder.set_depth(png::BitDepth::Eight);
+    encoder.set_compression(Compression::Best);
     let mut writer = encoder.write_header().unwrap();
     writer.write_image_data(&serialized_bytes).unwrap();
 }

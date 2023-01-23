@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 bmp = "0.5.0"
 png = "0.17.7"
+tiff = "0.8.1"
